@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  # 1. Database MySQL
+  db:
+    image: mysql:8.0
+    container_name: smart_parking_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: long12345
+      MYSQL_DATABASE: smart_parking_its
+    ports:
+      - "3307:3306" # Port ngoài là 3307 để tránh trùng nếu máy em đã có MySQL
+    volumes:
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro # Tự động tạo bảng
+      - mysql_data:/var/lib/mysql
+
+  # 2. Backend FastAPI
+  backend:
+    build: ./backend
+    container_name: smart_parking_backend
+    depends_on:
+      - db
+    environment:
+      # Thay đổi URL database để trỏ vào tên service 'db' thay vì localhost
+      DATABASE_URL: mysql+mysqlconnector://root:long12345@db:3306/smart_parking_its
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+
+  # 3. Frontend React
+  frontend:
+    build: ./frontend
+    container_name: smart_parking_frontend
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+    stdin_open: true
+
+volumes:
+  mysql_data:

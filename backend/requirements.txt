@@ -1,0 +1,22 @@
+# FastAPI Backend Requirements
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
+
+# Database
+sqlalchemy==2.0.23
+mysql-connector-python==8.2.0
+
+# Computer Vision & AI
+opencv-python==4.8.1.78
+ultralytics==8.0.220
+easyocr==1.7.0
+numpy==1.24.3
+torch==2.1.0
+torchvision==0.16.0
+
+# Data Models
+pydantic==2.5.0
+
+# Optional but recommended
+Pillow==9.5.0
