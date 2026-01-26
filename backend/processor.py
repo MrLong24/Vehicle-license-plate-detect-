@@ -79,7 +79,8 @@ def process_frame(frame):
             if h < 40 or w < 120:
                 continue
                 
-            plate_type = "Biển vuông" if (h / w) > 0.55 else "Biển dài"
+            aspect_ratio = h / w
+            is_square = aspect_ratio > 0.55
 
             try:
                 processed = preprocess_for_ocr(plate_img)
@@ -106,11 +107,27 @@ def process_frame(frame):
                 last_ocr_text = fixed_text
                 
                 area = (x2 - x1) * (y2 - y1)
+                
+                rows = len(ocr_results)
+                char_count = len(fixed_text)
+                
+                if rows == 1:
+                    vehicle_type = "Car"  # Typically long plate for cars
+                elif rows == 2:
+                    if is_square:
+                        if char_count >= 9:
+                            vehicle_type = "Motorcycle"
+                        else:
+                            vehicle_type = "Car"
+                    else:
+                        vehicle_type = "Car"  # Fallback
+                else:
+                    continue  # Invalid number of rows
 
                 plates.append({
                     "area": area,
                     "text": fixed_text,
-                    "type": plate_type,
+                    "type": vehicle_type,
                     "box": [x1, y1, x2, y2]
                 })
 
