@@ -20,7 +20,7 @@ AI-powered parking management system with automatic license plate recognition.
 
 ```bash
 # 1. Clone the project
-git clone https://github.com/yourusername/smartpark-ai.git
+git clone https://github.com/MrLong24/Vehicle-license-plate-detect-.git
 cd smartpark-ai
 
 # 2. Start everything with one command!
