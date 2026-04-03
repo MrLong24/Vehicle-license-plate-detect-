@@ -65,6 +65,21 @@ const SmartParkApp = () => {
     }
   };
 
+  const isValidVietnamPlate = (plate) => {
+    if (!plate) return false;
+    
+    const cleaned = plate
+    .toString()
+    .trim()
+    .toUpperCase()
+    .replace(/[\s.-]+/g, '');
+
+    if (cleaned.length < 7 || cleaned.length > 10) return false;
+
+    const regex = /^[0-9]{2}[A-Z]{1,2}[0-9]{4,6}$/;
+    return regex.test(cleaned);
+  };
+
   // Check vehicle status
   const checkVehicleStatus = async (plate) => {
     try {
@@ -337,14 +352,22 @@ const SmartParkApp = () => {
 
   // Handle authorization
   const handleAuthorize = async () => {
-    if (!detectedPlate) return;
+    if (!detectedPlate) {
+      setStatusMessage('❌ Vui lòng nhập biển số xe');
+      return;
+    }
+
+    if (!isValidVietnamPlate(detectedPlate)) {
+      setStatusMessage('❌ Biển số xe không hợp lệ!\nVí dụ đúng: 51F97022 hoặc 29A12345');
+      return;
+    }
 
     const vehicleStatus = await checkVehicleStatus(detectedPlate);
     
     if (vehicleStatus && vehicleStatus.status === 'IN') {
       await registerExit(detectedPlate);
     } else {
-      await registerEntry(detectedPlate, vehicleType);
+      await registerEntry(detectedPlate, vehicleType || 'Car');
     }
   };
 
@@ -615,10 +638,26 @@ const SmartParkApp = () => {
                 <input
                   type="text"
                   value={detectedPlate}
-                  onChange={(e) => setDetectedPlate(e.target.value.toUpperCase())}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white"
+                  onChange={(e) => {
+                    const value = e.target.value.toUpperCase();
+                    setDetectedPlate(value);
+                    // Optional: xóa message lỗi khi user gõ lại
+                    if (statusMessage.includes('không hợp lệ')) setStatusMessage('');
+                  }}
+                  className={`w-full bg-slate-800 border rounded-lg px-4 py-3 text-white focus:outline-none ${
+                    detectedPlate && !isValidVietnamPlate(detectedPlate)
+                      ? 'border-red-500 focus:border-red-500'
+                      : 'border-slate-700 focus:border-blue-500'
+                  }`}
                   placeholder="51F-97022"
                 />
+                
+                {/* Hiển thị lỗi ngay dưới input */}
+                {detectedPlate && !isValidVietnamPlate(detectedPlate) && (
+                  <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
+                    <span>⚠️</span> Biển số không đúng định dạng
+                  </p>
+                )}
               </div>
               
               <div className="mb-6">
