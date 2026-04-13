@@ -1147,17 +1147,37 @@ const SmartParkApp = () => {
       setTimeout(() => setMessage({ type: '', text: '' }), 3000);
     };
 
+    const normalizeSettings = (currentSettings) => {
+      const normalizedParkingFee = currentSettings.parkingFee > 0 ? currentSettings.parkingFee : 5000;
+      const normalizedCapacity = currentSettings.capacity > 0 ? currentSettings.capacity : 1;
+
+      return {
+        ...currentSettings,
+        parkingFee: normalizedParkingFee,
+        capacity: normalizedCapacity
+      };
+    };
+
     const handleSave = async () => {
       setSaving(true);
       try {
+        const finalSettings = normalizeSettings(settings);
+
+        if (
+          finalSettings.parkingFee !== settings.parkingFee ||
+          finalSettings.capacity !== settings.capacity
+        ) {
+          setSettings(finalSettings);
+        }
+
         const response = await fetch(`${API_BASE}/config`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            parking_fee: settings.parkingFee,
-            total_capacity: settings.capacity,
-            auto_detection: settings.autoDetect,
-            sound_alert: settings.soundAlert
+            parking_fee: finalSettings.parkingFee,
+            total_capacity: finalSettings.capacity,
+            auto_detection: finalSettings.autoDetect,
+            sound_alert: finalSettings.soundAlert
           })
         });
         
