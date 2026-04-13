@@ -12,6 +12,7 @@ import uvicorn
 import os
 from collections import defaultdict
 import time
+import re
 
 
 app = FastAPI()
@@ -76,6 +77,19 @@ def confirm_plate(plate_text: str):
         return plate_text
 
     return None
+
+def normalize_plate(plate: str) -> str:
+    if not plate:
+        return ""
+    return re.sub(r'[\s.-]+', '', str(plate)).upper()
+
+def is_valid_vietnam_plate(plate: str) -> bool:
+    cleaned = normalize_plate(plate)
+    if len(cleaned) < 7 or len(cleaned) > 10:
+        return False
+    
+    pattern = r'^[0-9]{2}[A-Z]{1,2}[0-9]{4,6}$'
+    return bool(re.match(pattern, cleaned))
 
 # API Endpoints
 
@@ -363,6 +377,12 @@ async def check_vehicle(plate_number: str):
 async def register_vehicle_entry(entry: VehicleEntry):
     """Register a new vehicle entry"""
     try:
+        if not is_valid_vietnam_plate(entry.plate_number):
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid license plate format! Example: 51F-97022 or 29A12345"
+            )
+        
         # Check if vehicle is already inside
         with engine.connect() as conn:
             existing = conn.execute(
@@ -390,6 +410,8 @@ async def register_vehicle_entry(entry: VehicleEntry):
             "success": True,
             "message": "Vehicle entry registered successfully"
         }
+    except HTTPException as e:
+        raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -397,6 +419,12 @@ async def register_vehicle_entry(entry: VehicleEntry):
 async def register_vehicle_exit(exit_data: VehicleExit):
     """Register a vehicle exit and calculate fee"""
     try:
+        if not is_valid_vietnam_plate(exit_data.plate_number):
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid license plate format! Example: 51F-97022 or 29A12345"
+            )
+
         # Check if vehicle exists and is IN
         with engine.connect() as conn:
             vehicle = conn.execute(
@@ -435,6 +463,8 @@ async def register_vehicle_exit(exit_data: VehicleExit):
             "message": "Vehicle exit registered successfully",
             "fee": fee
         }
+    except HTTPException as e:
+        raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
