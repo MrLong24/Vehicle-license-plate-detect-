@@ -362,12 +362,17 @@ const SmartParkApp = () => {
       return;
     }
 
+    if (!vehicleType || !vehicleType.trim()) {
+      setStatusMessage('❌ Vui lòng nhập loại xe (Car, Motorcycle, Truck,...)');
+      return;
+    }
+
     const vehicleStatus = await checkVehicleStatus(detectedPlate);
     
     if (vehicleStatus && vehicleStatus.status === 'IN') {
       await registerExit(detectedPlate);
     } else {
-      await registerEntry(detectedPlate, vehicleType || 'Car');
+      await registerEntry(detectedPlate, vehicleType.trim());
     }
   };
 
