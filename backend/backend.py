@@ -1,6 +1,6 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from sqlalchemy import create_engine, text
 from datetime import datetime
 import cv2
@@ -56,6 +56,23 @@ class SystemConfig(BaseModel):
     total_capacity: int
     auto_detection: bool
     sound_alert: bool
+
+    @validator('parking_fee', pre=True)
+    def validate_parking_fee(cls, value):
+        try:
+            fee = int(value)
+        except (TypeError, ValueError):
+            return 5000
+        return fee if fee > 0 else 5000
+
+    @validator('total_capacity', pre=True)
+    def validate_total_capacity(cls, value):
+        try:
+            capacity = int(value)
+        except (TypeError, ValueError):
+            return 1
+        return capacity if capacity > 0 else 1
+
 
 def confirm_plate(plate_text: str):
     global last_confirmed_plate, last_confirmed_time
@@ -130,6 +147,12 @@ async def get_system_config():
 @app.post("/api/config")
 async def update_system_config(config: SystemConfig):
     """Update system configuration"""
+    # Validate and normalize config values in case API is called directly
+    if config.parking_fee <= 0:
+        config.parking_fee = 5000
+    if config.total_capacity <= 0:
+        config.total_capacity = 1
+
     try:
         with engine.begin() as conn:
             # Check if config exists
